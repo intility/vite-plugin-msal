@@ -94,17 +94,18 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
 
 			server.middlewares.use((req, res, next) => {
 				const pathname = req.originalUrl?.split("?")[0];
-				if (pathname !== mergedConfig.redirectBridgePath) {
+				if (!req.originalUrl || pathname !== mergedConfig.redirectBridgePath) {
 					return next();
 				}
 
-				res.setHeader("Content-Type", "text/html");
-				res.statusCode = 200;
-				res.end(
-					redirectHtml(
-						`<script type="module">import "${redirectEntryModule}";</script>`,
-					),
+				const html = redirectHtml(
+					`<script type="module">import "${redirectEntryModule}";</script>`,
 				);
+				server.transformIndexHtml(req.originalUrl, html).then((transformed) => {
+					res.setHeader("Content-Type", "text/html");
+					res.statusCode = 200;
+					res.end(transformed);
+				});
 			});
 		},
 

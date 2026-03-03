@@ -1,5 +1,5 @@
 {
-	"name": "vite-plugin-msal-react-sample",
+	"name": "@samples/react",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
