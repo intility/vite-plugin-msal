@@ -1,0 +1,122 @@
+import { resolve } from "node:path";
+import type { Plugin, PreviewServer, ViteDevServer } from "vite";
+import { normalizeRollupInput } from "./utils.js";
+
+type VitePluginMsalConfig = {
+	redirectBridgePath: string;
+};
+
+const defaultConfig: VitePluginMsalConfig = {
+	redirectBridgePath: "/redirect",
+};
+
+const redirectEntryModule = "@intility/vite-plugin-msal/redirect";
+const virtualRedirectHtml = "virtual:msal-redirect.html";
+
+function redirectHtml(body = ""): string {
+	return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Authentication Redirect</title>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>`;
+}
+
+function useCoopHeader(
+	server: ViteDevServer | PreviewServer,
+	config: VitePluginMsalConfig,
+) {
+	server.middlewares.use((req, res, next) => {
+		const pathname = req.originalUrl?.split("?")[0];
+		if (pathname !== config.redirectBridgePath) {
+			res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+		}
+		next();
+	});
+}
+
+export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
+	const mergedConfig = { ...defaultConfig, ...config };
+	let resolvedId: string;
+
+	return {
+		name: "vite-plugin-msal",
+
+		config(userConfig) {
+			const root = userConfig.root ?? process.cwd();
+			const htmlFileName = `${mergedConfig.redirectBridgePath.replace(/^\//, "")}.html`;
+			resolvedId = resolve(root, htmlFileName);
+
+			// Normalize input to object format so deep merge works
+			const existing = userConfig.build?.rollupOptions?.input;
+			const normalized = normalizeRollupInput(
+				existing ?? resolve(root, "index.html"),
+			);
+
+			return {
+				build: {
+					rollupOptions: {
+						input: { ...normalized, [htmlFileName]: virtualRedirectHtml },
+					},
+				},
+			};
+		},
+
+		resolveId(id) {
+			if (id === virtualRedirectHtml) {
+				return resolvedId;
+			}
+		},
+
+		load(id) {
+			if (id === resolvedId) {
+				return redirectHtml();
+			}
+		},
+
+		transformIndexHtml: {
+			order: "pre",
+			handler(html, ctx) {
+				if (ctx.filename !== resolvedId) return;
+
+				return {
+					html,
+					tags: [
+						{
+							tag: "script",
+							attrs: { type: "module", src: redirectEntryModule },
+							injectTo: "body",
+						},
+					],
+				};
+			},
+		},
+
+		configureServer(server) {
+			useCoopHeader(server, mergedConfig);
+
+			server.middlewares.use((req, res, next) => {
+				const pathname = req.originalUrl?.split("?")[0];
+				if (pathname !== mergedConfig.redirectBridgePath) {
+					return next();
+				}
+
+				res.setHeader("Content-Type", "text/html");
+				res.statusCode = 200;
+				res.end(
+					redirectHtml(
+						`<script type="module">import "${redirectEntryModule}";</script>`,
+					),
+				);
+			});
+		},
+
+		configurePreviewServer(server) {
+			useCoopHeader(server, mergedConfig);
+		},
+	};
+}

@@ -4,7 +4,6 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-	//@ts-expect-error
 	plugins: [react(), msal()],
 	server: {
 		port: 3000,
