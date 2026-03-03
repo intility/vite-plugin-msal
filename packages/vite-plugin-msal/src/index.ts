@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import type { Plugin, PreviewServer, ViteDevServer } from "vite";
-import { normalizeRollupInput } from "./utils.js";
+import { addBuildInput } from "./utils.js";
 
 type VitePluginMsalConfig = {
 	redirectBridgePath: string;
@@ -51,19 +51,12 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
 			const htmlFileName = `${mergedConfig.redirectBridgePath.replace(/^\//, "")}.html`;
 			resolvedId = resolve(root, htmlFileName);
 
-			// Normalize input to object format so deep merge works
-			const existing = userConfig.build?.rollupOptions?.input;
-			const normalized = normalizeRollupInput(
-				existing ?? resolve(root, "index.html"),
+			addBuildInput(
+				userConfig,
+				htmlFileName,
+				virtualRedirectHtml,
+				resolve(root, "index.html"),
 			);
-
-			return {
-				build: {
-					rollupOptions: {
-						input: { ...normalized, [htmlFileName]: virtualRedirectHtml },
-					},
-				},
-			};
 		},
 
 		resolveId(id) {
