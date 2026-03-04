@@ -6,30 +6,30 @@ import type { UserConfig } from "vite";
  * input (string | string[] | object | undefined) to object form.
  */
 export function addBuildInput(
-	userConfig: UserConfig,
-	name: string,
-	entry: string,
-	fallbackInput?: string,
+  userConfig: UserConfig,
+  name: string,
+  entry: string,
+  fallbackInput?: string,
 ): void {
-	userConfig.build ??= {};
-	userConfig.build.rollupOptions ??= {};
+  userConfig.build ??= {};
+  userConfig.build.rollupOptions ??= {};
 
-	const existing = userConfig.build.rollupOptions.input;
-	const normalized = normalizeRollupInput(existing ?? fallbackInput);
+  const existing = userConfig.build.rollupOptions.input;
+  const normalized = normalizeRollupInput(existing ?? fallbackInput);
 
-	userConfig.build.rollupOptions.input = {
-		...normalized,
-		[name]: entry,
-	};
+  userConfig.build.rollupOptions.input = {
+    ...normalized,
+    [name]: entry,
+  };
 }
 
 function normalizeRollupInput(
-	input: InputOption | undefined,
+  input: InputOption | undefined,
 ): Record<string, string> {
-	if (!input) return {};
-	if (typeof input === "string") return { main: input };
-	if (Array.isArray(input)) {
-		return Object.fromEntries(input.map((v, i) => [`entry${i}`, v]));
-	}
-	return input;
+  if (!input) return {};
+  if (typeof input === "string") return { main: input };
+  if (Array.isArray(input)) {
+    return Object.fromEntries(input.map((v, i) => [`entry${i}`, v]));
+  }
+  return input;
 }

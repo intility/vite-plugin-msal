@@ -1,0 +1,38 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: "cron"
+      cronjob: "0 8 * * MON#1"
+      timezone: "Europe/Oslo"
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      minor-and-patch:
+        patterns:
+          - "*"
+        # exclude all previously defined groups
+        # workaround for these issues:
+        # https://github.com/dependabot/dependabot-core/issues/8558
+        # https://github.com/dependabot/dependabot-core/issues/10790
+        exclude-patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+        update-types:
+          - patch
+          - minor
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: "cron"
+      cronjob: "0 8 * * MON#1"
+      timezone: "Europe/Oslo"

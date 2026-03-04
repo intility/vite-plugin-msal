@@ -1,27 +1,36 @@
 {
-	"name": "@intility/vite-plugin-msal",
-	"version": "0.0.0",
-	"description": "Vite plugin for msal-browser",
-	"license": "MIT",
-	"author": "Intility AS",
-	"type": "module",
-	"exports": {
-		".": "./dist/index.js",
-		"./redirect": "./dist/redirect.js"
-	},
-	"main": "dist/index.js",
-	"peerDependencies": {
-		"@azure/msal-browser": "^5.0.0",
-		"vite": "^7.0.0"
-	},
-	"scripts": {
-		"build": "tsc",
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"devDependencies": {
-		"@azure/msal-browser": "^5.2.0",
-		"@total-typescript/tsconfig": "^1.0.4",
-		"typescript": "^5.9.3",
-		"vite": "^7.3.1"
-	}
+  "name": "@intility/vite-plugin-msal",
+  "version": "0.0.0",
+  "description": "Vite plugin for msal-browser",
+  "license": "MIT",
+  "author": "Intility AS",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./redirect": "./dist/redirect.js"
+  },
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/intility/vite-plugin-msal",
+    "directory": "packages/vite-plugin-msal"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@azure/msal-browser": "^5.0.0",
+    "vite": "^7.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@azure/msal-browser": "^5.2.0",
+    "@total-typescript/tsconfig": "^1.0.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
 }

@@ -1,8 +1,21 @@
 {
-	"name": "vite-plugin-msal",
-	"private": true,
-	"workspaces": [
-		"samples/*",
-		"packages/*"
-	]
+  "name": "vite-plugin-msal",
+  "private": true,
+  "packageManager": "npm@11.11.0",
+  "workspaces": [
+    "samples/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "start": "",
+    "build": "turbo run build",
+    "build:packages": "turbo run build --filter=packages/*",
+    "release": "changeset publish",
+    "postinstall": "turbo telemetry disable"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.5",
+    "@changesets/cli": "^2.30.0",
+    "turbo": "^2.8.13"
+  }
 }
