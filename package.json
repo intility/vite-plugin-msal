@@ -8,9 +8,10 @@
   ],
   "scripts": {
     "start": "",
+    "lint": "biome check",
     "build": "turbo run build",
     "build:packages": "turbo run build --filter=packages/*",
-    "release": "changeset publish",
+    "release": "npm run build && changeset publish",
     "postinstall": "turbo telemetry disable"
   },
   "devDependencies": {
