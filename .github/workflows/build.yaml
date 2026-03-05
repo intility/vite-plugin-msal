@@ -7,8 +7,8 @@ permissions:
   contents: read
 
 jobs:
-  build-packages:
-    name: Build Packages
+  build:
+    name: Build
     runs-on: ubuntu-latest
     env:
       TURBO_TELEMETRY_DISABLED: "1"
@@ -36,5 +36,5 @@ jobs:
       - name: Biome check
         run: npm run lint
 
-      - name: Build Packages
+      - name: Build
         run: npm run build
