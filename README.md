@@ -29,7 +29,7 @@ export default defineConfig({
 
 ### Redirect Bridge
 
-This plugin automatically emits a redirect bridge described in , which is bundled with vite and your installed version of `@azure/msal-browser`.
+This plugin automatically emits a redirect bridge described in [Login User / RedirectUri Considerations](https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/login-user.md#redirecturi-considerations) and the [v4 -> v5 Migration guide](https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/v4-migration.md#cross-origin-opener-policy-coop-support), which is bundled with vite and your installed version of `@azure/msal-browser`.
 
 If you haven't had a redirect bridge earlier, remember to update your redirect URIs in Entra ID.
 
