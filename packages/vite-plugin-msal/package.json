@@ -4,6 +4,12 @@
   "description": "Vite plugin for msal-browser",
   "license": "MIT",
   "author": "Intility AS",
+  "keywords": [
+    "vite-plugin",
+    "vite",
+    "msal",
+    "entra-id"
+  ],
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
