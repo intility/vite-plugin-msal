@@ -3,13 +3,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!dist/**",
-        "!node_modules/**",
-        "!.turbo/**"
-      ],
-      "outputs": ["dist/**", "node_modules/.tmp/**"]
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**"]
     },
     "dev": {
       "dependsOn": ["^build"],
