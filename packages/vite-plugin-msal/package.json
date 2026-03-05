@@ -13,7 +13,8 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./redirect": "./dist/redirect.js"
+    "./redirect": "./dist/redirect.js",
+    "./client": "./dist/client.js"
   },
   "main": "dist/index.js",
   "repository": {
