@@ -1,5 +1,11 @@
 # @intility/vite-plugin-msal
 
+## 0.2.0
+
+### Minor Changes
+
+- 6081891: add support for bypassing authority and cloud instance metadata resolution
+
 ## 0.1.1
 
 ### Patch Changes
