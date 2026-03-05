@@ -11,6 +11,7 @@
     "lint": "biome check",
     "build": "turbo run build",
     "build:packages": "turbo run build --filter=./packages/*",
+    "change": "changeset",
     "release": "npm run build:packages && changeset publish",
     "postinstall": "turbo telemetry disable"
   },
