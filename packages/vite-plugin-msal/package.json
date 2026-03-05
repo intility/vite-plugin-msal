@@ -12,7 +12,7 @@
   "main": "dist/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/intility/vite-plugin-msal",
+    "url": "git+https://github.com/intility/vite-plugin-msal.git",
     "directory": "packages/vite-plugin-msal"
   },
   "publishConfig": {
