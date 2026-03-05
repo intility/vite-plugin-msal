@@ -22,9 +22,29 @@ export default defineConfig({
     msal({
       // optional - defaults to `/redirect`
       redirectBridgePath: "/redirect",
+      // optional - defaults to the common authority
+      // used to fetch authority metadata for the client during build
+      authority: "https://login.microsoftonline.com/common"
     }),
   ]
 });
+```
+
+Use the `withMetadata` function to enable the metadata resolution buypassing feature:
+
+```ts
+import { withMetadata } from "@intility/vite-plugin-msal/client";
+import { PublicClientApplication } from "@azure/msal-browser";
+
+const msalConfig = withMetadata({
+  auth: {
+    clientId: "",
+    // must match the authority passed to the plugin
+    authority: ""
+  }
+})
+
+const instance = new PublicClientApplication(msalConfig);
 ```
 
 ## Features
@@ -39,6 +59,12 @@ The path of the redirect page can be configured with `redirectBridgePath`.
 
 ### Cross-Origin-Opener-Policy header
 
-On the dev server, return Cross-Origin-Opener-Policy header for all pages, except the redirect bridge.
+On the dev and preview server, return Cross-Origin-Opener-Policy header for all pages, except the redirect bridge.
 
-Note that the plugin can only configure correct behavior for the dev server. It is your responsibility to ensure your deployments returns the header in the correct scenarios.
+Note that the plugin can only configure correct behavior for the dev and preview server. It is your responsibility to ensure your deployments returns the header in the correct scenarios.
+
+### Buypass metadata resolution
+
+This plugin adds automatic support for buypassing metadata resolution, described in the [`msal-common` Performance docs](https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-common/docs/performance.md).
+
+It does so by fetching the metadata during the vite `build` or `dev` startup, and injecting it into the bundle when calling `withMetadata(config)`.

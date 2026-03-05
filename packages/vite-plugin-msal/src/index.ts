@@ -4,11 +4,41 @@ import { addBuildInput } from "./utils.js";
 
 type VitePluginMsalConfig = {
   redirectBridgePath: string;
+  authority: string;
 };
 
 const defaultConfig: VitePluginMsalConfig = {
   redirectBridgePath: "/redirect",
+  authority: "https://login.microsoftonline.com/common",
 };
+
+async function fetchMsalMetadata(authority: string) {
+  const cloudDiscoveryUrl = `https://login.microsoftonline.com/common/discovery/instance?api-version=1.1&authorization_endpoint=${encodeURIComponent(`${authority}/oauth2/v2.0/authorize`)}`;
+  const authorityMetadataUrl = `${authority}/v2.0/.well-known/openid-configuration`;
+
+  const [cloudDiscoveryResult, authorityMetadataResult] = await Promise.allSettled([
+    fetch(cloudDiscoveryUrl).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.text();
+    }),
+    fetch(authorityMetadataUrl).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.text();
+    }),
+  ]);
+
+  if (cloudDiscoveryResult.status === "rejected") {
+    console.warn(`[vite-plugin-msal] Failed to fetch cloud discovery metadata: ${cloudDiscoveryResult.reason}`);
+  }
+  if (authorityMetadataResult.status === "rejected") {
+    console.warn(`[vite-plugin-msal] Failed to fetch authority metadata: ${authorityMetadataResult.reason}`);
+  }
+
+  return {
+    cloudDiscoveryMetadata: cloudDiscoveryResult.status === "fulfilled" ? cloudDiscoveryResult.value : undefined,
+    authorityMetadata: authorityMetadataResult.status === "fulfilled" ? authorityMetadataResult.value : undefined,
+  };
+}
 
 const redirectEntryModule = "@intility/vite-plugin-msal/redirect";
 const virtualRedirectHtml = "virtual:msal-redirect.html";
@@ -46,7 +76,7 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
   return {
     name: "vite-plugin-msal",
 
-    config(userConfig) {
+    async config(userConfig) {
       const root = userConfig.root ?? process.cwd();
       const htmlFileName = `${mergedConfig.redirectBridgePath.replace(/^\//, "")}.html`;
       resolvedId = resolve(root, htmlFileName);
@@ -57,6 +87,19 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
         virtualRedirectHtml,
         resolve(root, "index.html"),
       );
+
+      const { cloudDiscoveryMetadata, authorityMetadata } = await fetchMsalMetadata(mergedConfig.authority);
+
+      const define: Record<string, string> = {};
+      define.__VITE_PLUGIN_MSAL_METADATA_AUTHORITY__ = JSON.stringify(mergedConfig.authority);
+      if (cloudDiscoveryMetadata) {
+        define.__VITE_PLUGIN_MSAL_CLOUD_DISCOVERY_METADATA__ = JSON.stringify(cloudDiscoveryMetadata);
+      }
+      if (authorityMetadata) {
+        define.__VITE_PLUGIN_MSAL_AUTHORITY_METADATA__ = JSON.stringify(authorityMetadata);
+      }
+
+      return { define };
     },
 
     resolveId(id) {
