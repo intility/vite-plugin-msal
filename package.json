@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "start": "",
+    "start": "turbo run start",
     "lint": "biome check",
     "build": "turbo run build",
     "build:packages": "turbo run build --filter=packages/*",
