@@ -18,10 +18,12 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-	plugins: [msal({
-	  // optional - defaults to `/redirect`
-	  redirectBridgePath: "/redirect",
-	})]
+  plugins: [
+    msal({
+      // optional - defaults to `/redirect`
+      redirectBridgePath: "/redirect",
+    }),
+  ]
 });
 ```
 
