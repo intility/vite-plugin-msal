@@ -1,5 +1,11 @@
 # @intility/vite-plugin-msal
 
+## 0.1.1
+
+### Patch Changes
+
+- 4cd6405: update code example in readme
+
 ## 0.1.0
 
 ### Minor Changes
