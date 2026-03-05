@@ -45,11 +45,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Setup GitHub Packages
-        uses: actions/setup-node@v6
-        with:
-          registry-url: https://npm.pkg.github.com
-
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@6a0a831ff30acef54f2c6aa1cbbc1096b066edaf #v1.7.0
