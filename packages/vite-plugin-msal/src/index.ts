@@ -5,10 +5,12 @@ import { addBuildInput } from "./utils.js";
 type VitePluginMsalConfig = {
   redirectBridgePath: string;
   authority?: string;
+  addCoopHeader: boolean;
 };
 
 const defaultConfig: VitePluginMsalConfig = {
   redirectBridgePath: "redirect",
+  addCoopHeader: true,
 };
 
 async function fetchMsalMetadata(authority: string) {
@@ -70,6 +72,8 @@ function useCoopHeader(
   server: ViteDevServer | PreviewServer,
   config: VitePluginMsalConfig,
 ) {
+  if (!config.addCoopHeader) return;
+
   server.middlewares.use((req, res, next) => {
     const pathname = req.originalUrl?.split("?")[0];
     if (

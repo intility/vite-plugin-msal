@@ -22,6 +22,8 @@ export default defineConfig({
     msal({
       // optional - defaults to `/redirect`
       redirectBridgePath: "/redirect",
+      // optional - defaults to true
+      addCoopHeader: true,
       // optional - defaults to undefined
       // if defined: fetches authority metadata for the client during build
       authority: "https://login.microsoftonline.com/common"
