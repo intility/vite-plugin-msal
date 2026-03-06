@@ -4,12 +4,13 @@ import { addBuildInput } from "./utils.js";
 
 type VitePluginMsalConfig = {
   redirectBridgePath: string;
-  authority: string;
+  authority?: string;
+  addCoopHeader: boolean;
 };
 
 const defaultConfig: VitePluginMsalConfig = {
-  redirectBridgePath: "/redirect",
-  authority: "https://login.microsoftonline.com/common",
+  redirectBridgePath: "redirect",
+  addCoopHeader: true,
 };
 
 async function fetchMsalMetadata(authority: string) {
@@ -71,9 +72,14 @@ function useCoopHeader(
   server: ViteDevServer | PreviewServer,
   config: VitePluginMsalConfig,
 ) {
+  if (!config.addCoopHeader) return;
+
   server.middlewares.use((req, res, next) => {
     const pathname = req.originalUrl?.split("?")[0];
-    if (pathname !== config.redirectBridgePath) {
+    if (
+      pathname !== config.redirectBridgePath &&
+      pathname !== `${config.redirectBridgePath}.html`
+    ) {
       res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
     }
     next();
@@ -82,6 +88,10 @@ function useCoopHeader(
 
 export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
   const mergedConfig = { ...defaultConfig, ...config };
+  // Normalize: ensure leading / and strip trailing .html
+  mergedConfig.redirectBridgePath = mergedConfig.redirectBridgePath
+    .replace(/\.html$/, "")
+    .replace(/^\/?/, "/");
   let resolvedId: string;
 
   return {
@@ -89,7 +99,7 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
 
     async config(userConfig) {
       const root = userConfig.root ?? process.cwd();
-      const htmlFileName = `${mergedConfig.redirectBridgePath.replace(/^\//, "")}.html`;
+      const htmlFileName = `${mergedConfig.redirectBridgePath.slice(1)}.html`;
       resolvedId = resolve(root, htmlFileName);
 
       addBuildInput(
@@ -99,24 +109,26 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
         resolve(root, "index.html"),
       );
 
-      const { cloudDiscoveryMetadata, authorityMetadata } =
-        await fetchMsalMetadata(mergedConfig.authority);
+      if (mergedConfig.authority) {
+        const { cloudDiscoveryMetadata, authorityMetadata } =
+          await fetchMsalMetadata(mergedConfig.authority);
 
-      const define: Record<string, string> = {};
-      define.__VITE_PLUGIN_MSAL_METADATA_AUTHORITY__ = JSON.stringify(
-        mergedConfig.authority,
-      );
-      if (cloudDiscoveryMetadata) {
-        define.__VITE_PLUGIN_MSAL_CLOUD_DISCOVERY_METADATA__ = JSON.stringify(
-          cloudDiscoveryMetadata,
+        const define: Record<string, string> = {};
+        define.__VITE_PLUGIN_MSAL_METADATA_AUTHORITY__ = JSON.stringify(
+          mergedConfig.authority,
         );
-      }
-      if (authorityMetadata) {
-        define.__VITE_PLUGIN_MSAL_AUTHORITY_METADATA__ =
-          JSON.stringify(authorityMetadata);
-      }
+        if (cloudDiscoveryMetadata) {
+          define.__VITE_PLUGIN_MSAL_CLOUD_DISCOVERY_METADATA__ = JSON.stringify(
+            cloudDiscoveryMetadata,
+          );
+        }
+        if (authorityMetadata) {
+          define.__VITE_PLUGIN_MSAL_AUTHORITY_METADATA__ =
+            JSON.stringify(authorityMetadata);
+        }
 
-      return { define };
+        return { define };
+      }
     },
 
     resolveId(id) {
@@ -154,7 +166,11 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
 
       server.middlewares.use((req, res, next) => {
         const pathname = req.originalUrl?.split("?")[0];
-        if (!req.originalUrl || pathname !== mergedConfig.redirectBridgePath) {
+        if (
+          !req.originalUrl ||
+          (pathname !== mergedConfig.redirectBridgePath &&
+            pathname !== `${mergedConfig.redirectBridgePath}.html`)
+        ) {
           return next();
         }
 
