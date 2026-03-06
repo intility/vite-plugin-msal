@@ -22,15 +22,15 @@ export default defineConfig({
     msal({
       // optional - defaults to `/redirect`
       redirectBridgePath: "/redirect",
-      // optional - defaults to the common authority
-      // used to fetch authority metadata for the client during build
+      // optional - defaults to undefined
+      // if defined: fetches authority metadata for the client during build
       authority: "https://login.microsoftonline.com/common"
     }),
   ]
 });
 ```
 
-Use the `withMetadata` function to enable the metadata resolution bypassing feature:
+Optional: Use the `withMetadata` function to enable the metadata resolution bypassing feature:
 
 ```ts
 import { withMetadata } from "@intility/vite-plugin-msal/client";
