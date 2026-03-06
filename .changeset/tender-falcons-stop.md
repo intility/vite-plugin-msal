@@ -1,5 +1,5 @@
 ---
-"@intility/vite-plugin-msal": patch
+"@intility/vite-plugin-msal": minor
 ---
 
-Only fetch authority metadata if it is defined
+only fetch authority metadata if it is defined
