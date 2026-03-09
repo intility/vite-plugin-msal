@@ -2,14 +2,37 @@ import { resolve } from "node:path";
 import type { Plugin, PreviewServer, ViteDevServer } from "vite";
 import { addBuildInput } from "./utils.js";
 
-type VitePluginMsalConfig = {
+/** Configuration options for the MSAL Vite plugin. */
+export type VitePluginMsalConfig = {
+  /**
+   * The URL path for the MSAL redirect bridge page.
+   *
+   * @defaultValue `"/redirect"`
+   */
   redirectBridgePath: string;
+  /**
+   * The authority URL used to pre-fetch cloud discovery and OpenID metadata at build time.
+   * When set, metadata is injected as build-time constants and can be applied using
+   * {@link withMetadata | `withMetadata`} from `@intility/vite-plugin-msal/client`.
+   *
+   * @example `"https://login.microsoftonline.com/common"`
+   */
   authority?: string;
+  /**
+   * Whether to add `Cross-Origin-Opener-Policy: same-origin` headers during dev/preview.
+   * The header is added to all pages except the redirect bridge path to avoid breaking
+   * popup and silent-based auth flows.
+   *
+   * @remarks The plugin can only configure this for the dev and preview servers.
+   * You are responsible for returning the header correctly in production deployments.
+   *
+   * @defaultValue `true`
+   */
   addCoopHeader: boolean;
 };
 
 const defaultConfig: VitePluginMsalConfig = {
-  redirectBridgePath: "redirect",
+  redirectBridgePath: "/redirect",
   addCoopHeader: true,
 };
 
@@ -86,6 +109,28 @@ function useCoopHeader(
   });
 }
 
+/**
+ * Vite plugin that integrates MSAL authentication into your application.
+ *
+ * This plugin:
+ * - Generates a redirect bridge HTML page for handling auth redirects in popups/iframes.
+ * - Optionally pre-fetches OIDC and cloud discovery metadata at build time (when {@link VitePluginMsalConfig.authority | `authority`} is set).
+ * - Adds `Cross-Origin-Opener-Policy` headers during dev/preview for all pages except the redirect bridge, so that COOP can be used without breaking popup and silent-based auth.
+ *
+ * @param config - Optional plugin configuration.
+ * @returns A Vite plugin.
+ *
+ * @example
+ * ```ts
+ * import msal from "@intility/vite-plugin-msal";
+ *
+ * export default defineConfig({
+ *   plugins: [
+ *     msal({ authority: "https://login.microsoftonline.com/common" }),
+ *   ],
+ * });
+ * ```
+ */
 export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
   const mergedConfig = { ...defaultConfig, ...config };
   // Normalize: ensure leading / and strip trailing .html
