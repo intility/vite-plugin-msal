@@ -1,5 +1,11 @@
 # @intility/vite-plugin-msal
 
+## 0.3.1
+
+### Patch Changes
+
+- 1c93464: add tsdoc
+
 ## 0.3.0
 
 ### Minor Changes
