@@ -206,6 +206,21 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
       },
     },
 
+    generateBundle(_, bundle) {
+      // The redirect page is a secondary HTML page, not the app's primary
+      // entry. Strip `isEntry` so framework manifest plugins (e.g. TanStack
+      // Start) that expect a single entry are not confused by it.
+      for (const chunk of Object.values(bundle)) {
+        if (
+          chunk.type === "chunk" &&
+          chunk.isEntry &&
+          chunk.facadeModuleId === resolvedId
+        ) {
+          chunk.isEntry = false;
+        }
+      }
+    },
+
     configureServer(server) {
       useCoopHeader(server, mergedConfig);
 

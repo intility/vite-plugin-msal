@@ -1,0 +1,32 @@
+{
+  "name": "@samples/react-router-framework",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "react-router dev",
+    "dev": "react-router dev",
+    "build": "react-router build",
+    "preview": "vite preview",
+    "typecheck": "react-router typegen && tsc"
+  },
+  "dependencies": {
+    "@azure/msal-browser": "^5.3.0",
+    "@azure/msal-react": "^5.0.5",
+    "@intility/vite-plugin-msal": "0.3.1",
+    "@react-router/node": "^7.6.1",
+    "isbot": "^5",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router": "^7.6.1"
+  },
+  "devDependencies": {
+    "@react-router/dev": "^7.6.1",
+    "@types/node": "^25.3.3",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}
