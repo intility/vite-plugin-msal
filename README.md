@@ -18,35 +18,8 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    msal({
-      // optional - defaults to `/redirect`
-      redirectBridgePath: "/redirect",
-      // optional - adds COOP header to all pages except the redirect bridge during dev/preview
-      coopHeader: "same-origin",
-      // optional - pre-fetches authority metadata at build time
-      // not needed for login.microsoftonline.com (MSAL has hardcoded metadata for it)
-      authority: "https://login.microsoftonline.com/common"
-    }),
-  ]
+  plugins: [msal()],
 });
-```
-
-Optional: Use the `withMetadata` function to enable the metadata resolution bypassing feature:
-
-```ts
-import { withMetadata } from "@intility/vite-plugin-msal/client";
-import { PublicClientApplication } from "@azure/msal-browser";
-
-const msalConfig = withMetadata({
-  auth: {
-    clientId: "",
-    // must match the authority passed to the plugin
-    authority: ""
-  }
-})
-
-const instance = new PublicClientApplication(msalConfig);
 ```
 
 ## Features
@@ -55,7 +28,13 @@ const instance = new PublicClientApplication(msalConfig);
 
 This plugin automatically emits a redirect bridge described in [Login User / RedirectUri Considerations](https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/login-user.md#redirecturi-considerations) and the [v4 -> v5 Migration guide](https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/v4-migration.md#cross-origin-opener-policy-coop-support), which is bundled with vite and your installed version of `@azure/msal-browser`.
 
-The path of the redirect page can be configured with `redirectBridgePath`.
+The path of the redirect page can be configured with `redirectBridgePath`:
+
+```ts
+msal({
+  redirectBridgePath: "/auth/redirect"
+})
+```
 
 > [!IMPORTANT]
 > If you haven't had a redirect bridge earlier, remember to update your redirect URIs in Entra ID.
@@ -63,6 +42,12 @@ The path of the redirect page can be configured with `redirectBridgePath`.
 ### Cross-Origin-Opener-Policy header
 
 The COOP header is returned by the authentication service and requires the application to have a redirect bridge (which this plugin provides). You do not need to serve the COOP header yourself, but if you choose to, configure `coopHeader` and the plugin will add it to all pages except the redirect bridge during dev/preview.
+
+```ts
+msal({
+  coopHeader: "same-origin"
+})
+```
 
 > [!IMPORTANT]
 > The plugin can only configure this for the dev and preview server. It is your responsibility to ensure your deployments return the header correctly in production.
@@ -74,7 +59,27 @@ This plugin can optionally pre-fetch cloud discovery and OpenID metadata at buil
 > [!NOTE]
 > This is **not needed** when using the standard `login.microsoftonline.com` authority — MSAL already includes hardcoded metadata for it. This option exists as an escape hatch for applications using a non-standard authority where MSAL cannot resolve metadata on its own. See [MSAL issue #8392](https://github.com/AzureAD/microsoft-authentication-library-for-js/issues/8392) for context.
 
-When configured, metadata is fetched during `build` or `dev` startup and injected into the bundle. Use `withMetadata(config)` to apply it.
+Configure the `authority` option in the plugin to fetch metadata at build time:
 
-> [!NOTE]
-> The MSAL config `auth.authority` must match the plugin's configured `authority` argument.
+```ts
+msal({
+  authority: "https://login.example.com/tenant-id"
+})
+```
+
+Then use `withMetadata` to apply the pre-fetched metadata to your MSAL config:
+
+```ts
+import { withMetadata } from "@intility/vite-plugin-msal/client";
+import { PublicClientApplication } from "@azure/msal-browser";
+
+const msalConfig = withMetadata({
+  auth: {
+    clientId: "your-client-id",
+  },
+});
+
+const instance = new PublicClientApplication(msalConfig);
+```
+
+If `authority` is not set in your MSAL config, the plugin's configured authority will be applied automatically. If it is set, it must match the authority passed to the plugin.
