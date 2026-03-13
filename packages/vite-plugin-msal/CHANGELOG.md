@@ -1,5 +1,17 @@
 # @intility/vite-plugin-msal
 
+## 0.4.0
+
+### Minor Changes
+
+- 0c4406f: Authority from the plugin will now be applied to the msal config if it's not specified
+- 0c4406f: Replace `addCoopHeader` (which defaulted to `true`) with an optional `coopHeader` directive. COOP headers are no longer emitted by default — set `coopHeader: "same-origin"` to restore the previous behavior.
+
+### Patch Changes
+
+- 62b7440: Support vite 8
+- 62b7440: Support meta-frameworks (react-router framework mode & tanstack start)
+
 ## 0.3.1
 
 ### Patch Changes
