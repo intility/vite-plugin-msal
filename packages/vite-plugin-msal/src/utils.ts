@@ -1,5 +1,6 @@
-import type { InputOption } from "rollup";
 import type { UserConfig } from "vite";
+
+type InputOption = string | string[] | Record<string, string>;
 
 /**
  * Add a named entry to the Vite build input, normalizing the existing
