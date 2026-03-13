@@ -2,6 +2,13 @@ import { resolve } from "node:path";
 import type { Plugin, PreviewServer, ViteDevServer } from "vite";
 import { addBuildInput } from "./utils.js";
 
+export type CoopHeader =
+  | "unsafe-none"
+  | "same-origin-allow-popups"
+  | "same-origin"
+  | "noopener-allow-popups"
+  | string;
+
 /** Configuration options for the MSAL Vite plugin. */
 export type VitePluginMsalConfig = {
   /**
@@ -15,25 +22,36 @@ export type VitePluginMsalConfig = {
    * When set, metadata is injected as build-time constants and can be applied using
    * {@link withMetadata | `withMetadata`} from `@intility/vite-plugin-msal/client`.
    *
+   * @remarks This is **not needed** when using the standard `login.microsoftonline.com`
+   * authority — MSAL already includes hardcoded metadata for it. This option exists as an
+   * escape hatch for applications using a non-standard authority where MSAL cannot resolve
+   * metadata on its own.
+   *
+   * @see {@link https://github.com/AzureAD/microsoft-authentication-library-for-js/issues/8392 | MSAL issue #8392}
+   *
    * @example `"https://login.microsoftonline.com/common"`
    */
   authority?: string;
   /**
-   * Whether to add `Cross-Origin-Opener-Policy: same-origin` headers during dev/preview.
-   * The header is added to all pages except the redirect bridge path to avoid breaking
-   * popup and silent-based auth flows.
+   * The `Cross-Origin-Opener-Policy` header directive to serve during dev/preview.
+   * When set, the header is added to all pages **except** the redirect bridge,
+   * so that COOP can be used without breaking popup and silent-based auth flows.
+   *
+   * The COOP header is returned by the authentication service and requires the
+   * application to have a redirect bridge (which this plugin provides). You do not
+   * need to serve this header yourself, but if you choose to, it must **not** be
+   * served on the redirect bridge page.
    *
    * @remarks The plugin can only configure this for the dev and preview servers.
    * You are responsible for returning the header correctly in production deployments.
    *
-   * @defaultValue `true`
+   * @example `"same-origin"`
    */
-  addCoopHeader: boolean;
+  coopHeader?: CoopHeader;
 };
 
 const defaultConfig: VitePluginMsalConfig = {
   redirectBridgePath: "/redirect",
-  addCoopHeader: true,
 };
 
 async function fetchMsalMetadata(authority: string) {
@@ -95,7 +113,8 @@ function useCoopHeader(
   server: ViteDevServer | PreviewServer,
   config: VitePluginMsalConfig,
 ) {
-  if (!config.addCoopHeader) return;
+  const { coopHeader } = config;
+  if (!coopHeader) return;
 
   server.middlewares.use((req, res, next) => {
     const pathname = req.originalUrl?.split("?")[0];
@@ -103,7 +122,7 @@ function useCoopHeader(
       pathname !== config.redirectBridgePath &&
       pathname !== `${config.redirectBridgePath}.html`
     ) {
-      res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+      res.setHeader("Cross-Origin-Opener-Policy", coopHeader);
     }
     next();
   });
@@ -114,8 +133,8 @@ function useCoopHeader(
  *
  * This plugin:
  * - Generates a redirect bridge HTML page for handling auth redirects in popups/iframes.
- * - Optionally pre-fetches OIDC and cloud discovery metadata at build time (when {@link VitePluginMsalConfig.authority | `authority`} is set).
- * - Adds `Cross-Origin-Opener-Policy` headers during dev/preview for all pages except the redirect bridge, so that COOP can be used without breaking popup and silent-based auth.
+ * - Optionally pre-fetches OIDC and cloud discovery metadata at build time (when {@link VitePluginMsalConfig.authority | `authority`} is set). This is only needed for non-standard authorities; `login.microsoftonline.com` metadata is hardcoded in MSAL.
+ * - Optionally adds a `Cross-Origin-Opener-Policy` header during dev/preview for all pages except the redirect bridge (when {@link VitePluginMsalConfig.coopHeader | `coopHeader`} is set).
  *
  * @param config - Optional plugin configuration.
  * @returns A Vite plugin.
