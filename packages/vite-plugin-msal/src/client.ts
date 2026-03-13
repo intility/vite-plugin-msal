@@ -7,13 +7,19 @@ declare const __VITE_PLUGIN_MSAL_METADATA_AUTHORITY__: string | undefined;
 /**
  * Enhances an MSAL {@link https://azuread.github.io/microsoft-authentication-library-for-js/ref/types/_azure_msal_browser.Configuration.html | `Configuration`}
  * with cloud discovery and authority metadata that was pre-fetched at build time,
- * enabling {@link https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-common/docs/performance.md | bypassing metadata resolution}
- * for improved performance.
+ * enabling {@link https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-common/docs/performance.md | bypassing metadata resolution}.
+ *
+ * @remarks This is **not needed** when using the standard `login.microsoftonline.com`
+ * authority — MSAL already includes hardcoded metadata for it. This function exists as an
+ * escape hatch for applications using a non-standard authority where MSAL cannot resolve
+ * metadata on its own.
  *
  * This function reads build-time constants injected by the plugin when
  * {@link VitePluginMsalConfig.authority | `authority`} is configured. If no metadata is available,
  * or if the config authority does not match the authority used during the build, the
  * original configuration is returned unchanged.
+ *
+ * @see {@link https://github.com/AzureAD/microsoft-authentication-library-for-js/issues/8392 | MSAL issue #8392}
  *
  * @param config - The MSAL browser configuration to enhance.
  * @returns The configuration with pre-fetched metadata merged into `auth`, or the original config if no metadata is available.
@@ -44,16 +50,13 @@ export function withMetadata(config: Configuration): Configuration {
       ? __VITE_PLUGIN_MSAL_METADATA_AUTHORITY__
       : undefined;
 
-  if (!cloudDiscoveryMetadata && !authorityMetadata) {
+  if (!metadataAuthority) {
     return config;
   }
 
-  const configAuthority =
-    config.auth?.authority ?? "https://login.microsoftonline.com/common";
-
-  if (metadataAuthority && configAuthority !== metadataAuthority) {
+  if (config.auth?.authority && config.auth.authority !== metadataAuthority) {
     console.warn(
-      `[vite-plugin-msal] Authority mismatch: config has "${configAuthority}" but metadata was fetched for "${metadataAuthority}". Skipping metadata.`,
+      `[vite-plugin-msal] Authority mismatch: config has "${config.auth.authority}" but metadata was fetched for "${metadataAuthority}". Skipping metadata.`,
     );
     return config;
   }
@@ -62,8 +65,9 @@ export function withMetadata(config: Configuration): Configuration {
     ...config,
     auth: {
       ...config.auth,
-      ...(cloudDiscoveryMetadata && { cloudDiscoveryMetadata }),
-      ...(authorityMetadata && { authorityMetadata }),
+      authority: metadataAuthority,
+      ...(cloudDiscoveryMetadata &&
+        authorityMetadata && { cloudDiscoveryMetadata, authorityMetadata }),
     },
   };
 }
