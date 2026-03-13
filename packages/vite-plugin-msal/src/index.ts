@@ -206,10 +206,11 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
       },
     },
 
-    generateBundle(_, bundle) {
-      // The redirect page is a secondary HTML page, not the app's primary
-      // entry. Strip `isEntry` so framework manifest plugins (e.g. TanStack
-      // Start) that expect a single entry are not confused by it.
+    writeBundle(_, bundle) {
+      // Strip isEntry on the redirect chunk AFTER Vite has emitted the HTML
+      // (which needs isEntry=true to link the script tag). This prevents
+      // framework manifest plugins (e.g. TanStack Start) that run in a
+      // subsequent build phase from seeing multiple entry chunks.
       for (const chunk of Object.values(bundle)) {
         if (
           chunk.type === "chunk" &&
