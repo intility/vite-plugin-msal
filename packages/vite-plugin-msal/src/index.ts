@@ -206,6 +206,22 @@ export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
       },
     },
 
+    writeBundle(_, bundle) {
+      // Strip isEntry on the redirect chunk AFTER Vite has emitted the HTML
+      // (which needs isEntry=true to link the script tag). This prevents
+      // framework manifest plugins (e.g. TanStack Start) that run in a
+      // subsequent build phase from seeing multiple entry chunks.
+      for (const chunk of Object.values(bundle)) {
+        if (
+          chunk.type === "chunk" &&
+          chunk.isEntry &&
+          chunk.facadeModuleId === resolvedId
+        ) {
+          chunk.isEntry = false;
+        }
+      }
+    },
+
     configureServer(server) {
       useCoopHeader(server, mergedConfig);
 
