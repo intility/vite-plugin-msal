@@ -82,4 +82,4 @@ const msalConfig = withMetadata({
 const instance = new PublicClientApplication(msalConfig);
 ```
 
-If `authority` is not set in your MSAL config, the plugin's configured authority will be applied automatically. If it is set, it must match the authority passed to the plugin.
+If `auth.authority` is not set in your MSAL config, the plugin's configured authority will be applied automatically. If it is set, it must match the authority passed to the plugin.

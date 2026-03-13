@@ -50,7 +50,7 @@ export function withMetadata(config: Configuration): Configuration {
       ? __VITE_PLUGIN_MSAL_METADATA_AUTHORITY__
       : undefined;
 
-  if (!cloudDiscoveryMetadata || !authorityMetadata || !metadataAuthority) {
+  if (!metadataAuthority) {
     return config;
   }
 
@@ -66,8 +66,8 @@ export function withMetadata(config: Configuration): Configuration {
     auth: {
       ...config.auth,
       authority: metadataAuthority,
-      cloudDiscoveryMetadata,
-      authorityMetadata,
+      ...(cloudDiscoveryMetadata &&
+        authorityMetadata && { cloudDiscoveryMetadata, authorityMetadata }),
     },
   };
 }

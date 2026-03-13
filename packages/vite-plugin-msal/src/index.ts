@@ -7,7 +7,7 @@ export type CoopHeader =
   | "same-origin-allow-popups"
   | "same-origin"
   | "noopener-allow-popups"
-  | string;
+  | (string & {});
 
 /** Configuration options for the MSAL Vite plugin. */
 export type VitePluginMsalConfig = {
