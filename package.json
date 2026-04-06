@@ -16,8 +16,8 @@
     "postinstall": "turbo telemetry disable"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.5",
+    "@biomejs/biome": "2.4.10",
     "@changesets/cli": "^2.30.0",
-    "turbo": "^2.8.13"
+    "turbo": "^2.9.4"
   }
 }
