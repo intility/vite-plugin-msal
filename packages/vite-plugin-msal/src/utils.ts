@@ -3,14 +3,24 @@ import type { UserConfig } from "vite";
 type InputOption = string | string[] | Record<string, string>;
 
 /**
+ * Read bundler options from a build config, preferring `rolldownOptions`
+ * (Vite 8+) and falling back to `rollupOptions` (Vite 7).
+ */
+function getBundlerOptions(build: Record<string, unknown> | undefined) {
+  // biome-ignore lint/suspicious/noExplicitAny: accessing untyped Vite 8 field
+  return (build as any)?.rolldownOptions ?? build?.rollupOptions;
+}
+
+/**
  * Add a named entry to the Vite build input, normalizing the existing
  * input (string | string[] | object | undefined) to object form.
  *
  * When a framework has configured environment-level build input
- * (e.g. `environments.client.build.rollupOptions.input`), the entry is
+ * (e.g. `environments.client.build.rollupOptions.input` or
+ * `environments.client.build.rolldownOptions.input`), the entry is
  * added there instead of the shared `build.rollupOptions.input`. This
  * ensures compatibility with frameworks like TanStack Start that use
- * the Vite 7 environment API.
+ * the Vite environment API and may set `rolldownOptions` on Vite 8.
  *
  * @param fallbackInput - Used only when no existing shared input is set.
  *   Vanilla Vite defaults to `index.html` at root, so this should be
@@ -24,18 +34,16 @@ export function addBuildInput(
   entry: string,
   fallbackInput?: string,
 ): void {
-  if (
-    userConfig.environments?.client?.build?.rollupOptions?.input !== undefined
-  ) {
+  const clientBuild = userConfig.environments?.client?.build;
+  const envBundlerOptions = getBundlerOptions(
+    clientBuild as Record<string, unknown> | undefined,
+  );
+
+  if (envBundlerOptions?.input !== undefined) {
     // A framework has set environment-level input — add there.
     // No fallback needed: the framework already defined its primary entry.
-    const normalized = normalizeRollupInput(
-      userConfig.environments.client.build.rollupOptions.input,
-    );
-    userConfig.environments.client.build.rollupOptions.input = {
-      ...normalized,
-      [name]: entry,
-    };
+    const normalized = normalizeRollupInput(envBundlerOptions.input);
+    envBundlerOptions.input = { ...normalized, [name]: entry };
   } else {
     // Vanilla Vite or framework using shared input — add to shared config.
     userConfig.build ??= {};
@@ -49,6 +57,18 @@ export function addBuildInput(
       [name]: entry,
     };
   }
+}
+
+/**
+ * Check whether a framework has configured environment-level build input
+ * (via `rollupOptions` or `rolldownOptions`).
+ */
+export function hasEnvironmentInput(userConfig: UserConfig): boolean {
+  const clientBuild = userConfig.environments?.client?.build;
+  const envBundlerOptions = getBundlerOptions(
+    clientBuild as Record<string, unknown> | undefined,
+  );
+  return envBundlerOptions?.input !== undefined;
 }
 
 function normalizeRollupInput(

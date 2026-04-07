@@ -2,13 +2,14 @@ import msal from "@intility/vite-plugin-msal";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   return {
+    resolve: {
+      tsconfigPaths: true,
+    },
     plugins: [
-      tsconfigPaths({ projects: ["./tsconfig.json"] }),
       tanstackStart({
         spa: { enabled: true },
       }),

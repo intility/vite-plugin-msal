@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import type { Plugin, PreviewServer, ViteDevServer } from "vite";
-import { addBuildInput } from "./utils.js";
+import { addBuildInput, hasEnvironmentInput } from "./utils.js";
 
 export type CoopHeader =
   | "unsafe-none"
@@ -137,7 +137,7 @@ function useCoopHeader(
  * - Optionally adds a `Cross-Origin-Opener-Policy` header during dev/preview for all pages except the redirect bridge (when {@link VitePluginMsalConfig.coopHeader | `coopHeader`} is set).
  *
  * @param config - Optional plugin configuration.
- * @returns A Vite plugin.
+ * @returns Vite plugins.
  *
  * @example
  * ```ts
@@ -150,123 +150,189 @@ function useCoopHeader(
  * });
  * ```
  */
-export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin {
+export default function msal(config?: Partial<VitePluginMsalConfig>): Plugin[] {
   const mergedConfig = { ...defaultConfig, ...config };
   // Normalize: ensure leading / and strip trailing .html
   mergedConfig.redirectBridgePath = mergedConfig.redirectBridgePath
     .replace(/\.html$/, "")
     .replace(/^\/?/, "/");
   let resolvedId: string;
+  // When a framework manages environment-level build input, we emit the
+  // redirect as a standalone chunk + asset instead of a build input entry.
+  // This avoids the redirect appearing as an entry chunk in the bundle,
+  // which breaks framework manifest plugins (e.g. TanStack Start) that
+  // expect a single entry. In Vite 8 (Rolldown) mutating bundle objects
+  // in generateBundle does not propagate between plugins, so we cannot
+  // rely on stripping isEntry after the fact.
+  let emitMode: "input" | "manual" = "input";
+  let redirectChunkRefId: string;
+  let isBuild = false;
 
-  return {
-    name: "vite-plugin-msal",
+  return [
+    {
+      name: "vite-plugin-msal",
 
-    async config(userConfig) {
-      const root = userConfig.root ?? process.cwd();
-      const htmlFileName = `${mergedConfig.redirectBridgePath.slice(1)}.html`;
-      resolvedId = resolve(root, htmlFileName);
+      async config(userConfig, { command }) {
+        isBuild = command === "build";
+        const root = userConfig.root ?? process.cwd();
+        const htmlFileName = `${mergedConfig.redirectBridgePath.slice(1)}.html`;
+        resolvedId = resolve(root, htmlFileName);
 
-      addBuildInput(
-        userConfig,
-        htmlFileName,
-        virtualRedirectHtml,
-        resolve(root, "index.html"),
-      );
-
-      if (mergedConfig.authority) {
-        const { cloudDiscoveryMetadata, authorityMetadata } =
-          await fetchMsalMetadata(mergedConfig.authority);
-
-        const define: Record<string, string> = {};
-        define.__VITE_PLUGIN_MSAL_METADATA_AUTHORITY__ = JSON.stringify(
-          mergedConfig.authority,
-        );
-        if (cloudDiscoveryMetadata) {
-          define.__VITE_PLUGIN_MSAL_CLOUD_DISCOVERY_METADATA__ = JSON.stringify(
-            cloudDiscoveryMetadata,
+        if (hasEnvironmentInput(userConfig)) {
+          emitMode = "manual";
+        } else {
+          addBuildInput(
+            userConfig,
+            htmlFileName,
+            virtualRedirectHtml,
+            resolve(root, "index.html"),
           );
         }
-        if (authorityMetadata) {
-          define.__VITE_PLUGIN_MSAL_AUTHORITY_METADATA__ =
-            JSON.stringify(authorityMetadata);
+
+        if (mergedConfig.authority) {
+          const { cloudDiscoveryMetadata, authorityMetadata } =
+            await fetchMsalMetadata(mergedConfig.authority);
+
+          const define: Record<string, string> = {};
+          define.__VITE_PLUGIN_MSAL_METADATA_AUTHORITY__ = JSON.stringify(
+            mergedConfig.authority,
+          );
+          if (cloudDiscoveryMetadata) {
+            define.__VITE_PLUGIN_MSAL_CLOUD_DISCOVERY_METADATA__ =
+              JSON.stringify(cloudDiscoveryMetadata);
+          }
+          if (authorityMetadata) {
+            define.__VITE_PLUGIN_MSAL_AUTHORITY_METADATA__ =
+              JSON.stringify(authorityMetadata);
+          }
+
+          return { define };
         }
+      },
 
-        return { define };
-      }
-    },
+      buildStart() {
+        if (emitMode === "manual" && isBuild) {
+          redirectChunkRefId = this.emitFile({
+            type: "chunk",
+            id: redirectEntryModule,
+            name: "redirect",
+          });
+        }
+      },
 
-    resolveId(id) {
-      if (id === virtualRedirectHtml) {
-        return resolvedId;
-      }
-    },
+      resolveId(id) {
+        if (id === virtualRedirectHtml) {
+          return resolvedId;
+        }
+      },
 
-    load(id) {
-      if (id === resolvedId) {
-        return redirectHtml();
-      }
-    },
+      load(id) {
+        if (id === resolvedId) {
+          return redirectHtml();
+        }
+      },
 
-    transformIndexHtml: {
-      order: "pre",
-      handler(html, ctx) {
-        if (ctx.filename !== resolvedId) return;
+      transformIndexHtml: {
+        order: "pre",
+        handler(html, ctx) {
+          if (ctx.filename !== resolvedId) return;
 
-        return {
-          html,
-          tags: [
-            {
-              tag: "script",
-              attrs: { type: "module", src: redirectEntryModule },
-              injectTo: "body",
-            },
-          ],
-        };
+          return {
+            html,
+            tags: [
+              {
+                tag: "script",
+                attrs: { type: "module", src: redirectEntryModule },
+                injectTo: "body",
+              },
+            ],
+          };
+        },
+      },
+
+      generateBundle(_, bundle) {
+        if (emitMode === "manual") {
+          const chunkFileName = this.getFileName(redirectChunkRefId);
+          const htmlFileName = `${mergedConfig.redirectBridgePath.slice(1)}.html`;
+
+          // Emit the redirect HTML as a standalone asset. We generate
+          // the HTML ourselves since we bypassed Vite's HTML pipeline.
+          this.emitFile({
+            type: "asset",
+            fileName: htmlFileName,
+            source: redirectHtml(
+              `<script type="module" crossorigin src="/${chunkFileName}"></script>`,
+            ),
+          });
+
+          // Strip isEntry on the redirect chunk so that framework
+          // manifest plugins (e.g. TanStack Start) that capture the
+          // bundle in a later generateBundle hook (enforce:"post")
+          // don't see multiple entry chunks. This is safe because we
+          // don't rely on Vite's HTML pipeline in manual mode.
+          for (const chunk of Object.values(bundle)) {
+            if (
+              chunk.type === "chunk" &&
+              chunk.isEntry &&
+              chunk.name === "redirect"
+            ) {
+              chunk.isEntry = false;
+            }
+          }
+        }
+      },
+
+      configureServer(server) {
+        useCoopHeader(server, mergedConfig);
+
+        server.middlewares.use((req, res, next) => {
+          const pathname = req.originalUrl?.split("?")[0];
+          if (
+            !req.originalUrl ||
+            (pathname !== mergedConfig.redirectBridgePath &&
+              pathname !== `${mergedConfig.redirectBridgePath}.html`)
+          ) {
+            return next();
+          }
+
+          const html = redirectHtml(
+            `<script type="module">import "${redirectEntryModule}";</script>`,
+          );
+          server
+            .transformIndexHtml(req.originalUrl, html)
+            .then((transformed) => {
+              res.setHeader("Content-Type", "text/html");
+              res.statusCode = 200;
+              res.end(transformed);
+            });
+        });
+      },
+
+      configurePreviewServer(server) {
+        useCoopHeader(server, mergedConfig);
       },
     },
+    {
+      name: "vite-plugin-msal:cleanup",
+      enforce: "post",
 
-    writeBundle(_, bundle) {
-      // Strip isEntry on the redirect chunk AFTER Vite has emitted the HTML
-      // (which needs isEntry=true to link the script tag). This prevents
-      // framework manifest plugins (e.g. TanStack Start) that run in a
-      // subsequent build phase from seeing multiple entry chunks.
-      for (const chunk of Object.values(bundle)) {
-        if (
-          chunk.type === "chunk" &&
-          chunk.isEntry &&
-          chunk.facadeModuleId === resolvedId
-        ) {
-          chunk.isEntry = false;
+      generateBundle(_, bundle) {
+        // In "input" mode, strip isEntry on the redirect chunk AFTER
+        // Vite's internal HTML plugin has processed the HTML (which
+        // needs isEntry=true to link the script tag). This
+        // enforce:"post" plugin runs after Vite's build plugins.
+        if (emitMode === "input") {
+          for (const chunk of Object.values(bundle)) {
+            if (
+              chunk.type === "chunk" &&
+              chunk.isEntry &&
+              chunk.facadeModuleId === resolvedId
+            ) {
+              chunk.isEntry = false;
+            }
+          }
         }
-      }
+      },
     },
-
-    configureServer(server) {
-      useCoopHeader(server, mergedConfig);
-
-      server.middlewares.use((req, res, next) => {
-        const pathname = req.originalUrl?.split("?")[0];
-        if (
-          !req.originalUrl ||
-          (pathname !== mergedConfig.redirectBridgePath &&
-            pathname !== `${mergedConfig.redirectBridgePath}.html`)
-        ) {
-          return next();
-        }
-
-        const html = redirectHtml(
-          `<script type="module">import "${redirectEntryModule}";</script>`,
-        );
-        server.transformIndexHtml(req.originalUrl, html).then((transformed) => {
-          res.setHeader("Content-Type", "text/html");
-          res.statusCode = 200;
-          res.end(transformed);
-        });
-      });
-    },
-
-    configurePreviewServer(server) {
-      useCoopHeader(server, mergedConfig);
-    },
-  };
+  ];
 }
