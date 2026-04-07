@@ -11,18 +11,18 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
-    "@azure/msal-browser": "^5.3.0",
-    "@azure/msal-react": "^5.0.5",
+    "@azure/msal-browser": "^5.6.3",
+    "@azure/msal-react": "^5.2.1",
     "@intility/vite-plugin-msal": "0.4.0",
-    "@react-router/node": "^7.6.1",
-    "isbot": "^5",
+    "@react-router/node": "^7.14.0",
+    "isbot": "^5.1.37",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router": "^7.6.1"
   },
   "devDependencies": {
-    "@react-router/dev": "^7.6.1",
-    "@types/node": "^25.3.3",
+    "@react-router/dev": "^7.14.0",
+    "@types/node": "^25.5.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "typescript": "~5.9.3",
