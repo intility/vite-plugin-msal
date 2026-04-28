@@ -15,8 +15,8 @@
     "@intility/vite-plugin-msal": "0.4.0",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@tanstack/router-plugin": "^1.132.0",
