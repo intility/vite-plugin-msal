@@ -16,14 +16,14 @@
     "@intility/vite-plugin-msal": "0.4.0",
     "@react-router/node": "^7.14.0",
     "isbot": "^5.1.37",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "react-router": "^7.6.1"
   },
   "devDependencies": {
     "@react-router/dev": "^7.14.0",
     "@types/node": "^25.5.2",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "typescript": "~6.0.3",
     "vite": "^7.3.1",
