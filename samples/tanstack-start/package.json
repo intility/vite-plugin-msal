@@ -15,13 +15,13 @@
     "@intility/vite-plugin-msal": "0.4.0",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@tanstack/router-plugin": "^1.132.0",
     "@types/node": "^25.5.2",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
     "typescript": "~6.0.3",
