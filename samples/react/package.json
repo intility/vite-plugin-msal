@@ -10,8 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@azure/msal-browser": "^5.11.0",
-    "@azure/msal-react": "^5.4.2",
+    "@azure/msal-browser": "^5.17.1",
+    "@azure/msal-react": "^5.5.3",
     "@intility/vite-plugin-msal": "0.4.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
@@ -20,9 +20,9 @@
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "globals": "^17.6.0",
+    "@vitejs/plugin-react": "^6.0.4",
+    "globals": "^17.8.0",
     "typescript": "~6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.1.5"
   }
 }
