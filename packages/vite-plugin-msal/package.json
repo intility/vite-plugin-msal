@@ -35,9 +35,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@azure/msal-browser": "^5.11.0",
+    "@azure/msal-browser": "^5.17.1",
     "@total-typescript/tsconfig": "^1.0.4",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.1.5"
   }
 }
