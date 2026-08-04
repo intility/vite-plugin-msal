@@ -37,7 +37,7 @@
   "devDependencies": {
     "@azure/msal-browser": "^5.17.1",
     "@total-typescript/tsconfig": "^1.0.4",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "^8.1.5"
   }
 }
