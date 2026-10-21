@@ -13,13 +13,13 @@
     "@azure/msal-browser": "^5.17.1",
     "@azure/msal-react": "^5.5.3",
     "@intility/vite-plugin-msal": "0.4.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.0.4",
     "globals": "^17.8.0",
     "typescript": "~7.0.2",
